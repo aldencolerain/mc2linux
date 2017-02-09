@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# setup
+ROOT_PARTITION=/dev/sda3
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+# mount devices
+echo "mounting devices"
+mount proc   /proc    -t proc     -o "nodev,noexec,nosuid"
+mount sysfs  /sys     -t sysfs    -o "nodev,noexec,nosuid"
+mount tmpfs  /run     -t tmpfs    -o "nosuid,size=20%,mode=0755"
+mount udev   /dev     -t devtmpfs -o "size=10M,mode=0755"
+mkdir -p /dev/pts
+mount devpts /dev/pts -t devpts -o "noexec,nosuid,gid=5,mode=0620"
+
+# start telnet server
+echo "starting recovery telnet shell"
+ifup -a
+sleep 1
+telnetd -l /bin/ash
+
+# start shell
+echo "starting recovery serial shell"
+exec < /dev/console
+exec &> /dev/console
+exec setsid cttyhack ash

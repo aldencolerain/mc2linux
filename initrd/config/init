@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# setup
+ROOT_PARTITION=/dev/sda3
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+# mount devices
+echo "mounting devices"
+mount proc   /proc    -t proc     -o "nodev,noexec,nosuid"
+mount sysfs  /sys     -t sysfs    -o "nodev,noexec,nosuid"
+mount tmpfs  /run     -t tmpfs    -o "nosuid,size=20%,mode=0755"
+mount udev   /dev     -t devtmpfs -o "size=10M,mode=0755"
+
+# wait for root device with debian
+echo "waiting for root partition device"
+while :; do if [ -b $ROOT_PARTITION ]; then break; else sleep 1; fi; done
+
+# mount rootfs, cleanup, and boot debian
+echo "starting debian"
+mount $ROOT_PARTITION /mnt/root
+umount /proc; umount /sys; umount /run; umount /dev
+exec switch_root /mnt/root /linuxrc
